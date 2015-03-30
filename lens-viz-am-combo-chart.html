@@ -1,0 +1,161 @@
+<link rel="import" href="../polymer/polymer.html"> 
+<link rel="import" href="../th-theme/th-theme.html"> 
+<link rel="import" href="../lens-u-data-utility/lens-u-data-utility.html">
+<link rel="import" href="../lens-u-data-selector/lens-u-data-selector.html">
+<!--
+A Thelma component providing solution to no problem in particular.
+
+##### Example
+
+    <lens-viz-am-combo-chart></lens-viz-am-combo-chart>
+
+@element lens-viz-am-combo-chart
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://nishacodes.github.io/lens-viz-am-combo-chart
+-->
+
+<polymer-element name="lens-viz-am-combo-chart" attributes="input chartTitle chartSubtitle">
+  <template>
+    <core-style ref="theme"></core-style>
+    <link rel="stylesheet" href="lens-viz-am-combo-chart.css">
+    <lens-u-data-utility id="utility"></lens-u-data-utility>
+    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
+    <div id="chart"></div>
+  </template>
+  <script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
+  <script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/patterns.js"></script>
+
+  <script>
+    Polymer({
+      input: [],
+      chartTitle: 'chart title',
+      chartSubtitle: 'chart subtitle',
+      bulletStyle: "round",// "none", "round", "square", "triangleUp", "triangleDown", "bubble", "custom"
+      showOptions: true,
+      observe: {
+        'labelValueSelection': 'configureOptions',
+        'input': 'ready'
+      },
+      created: function(){
+        this.input = [];
+        this.options = {};
+      },
+      ready: function () {
+        this.dataSelector= this.$.data_selector;
+        
+
+        // Listen for theme changes
+        document.addEventListener('th-theme-changed', function(e) {
+          this.getColors();
+          this.configureOptions();
+          this.drawChart();
+        }.bind(this));
+
+        this.dataSelector.addEventListener('th-data-selection-changed', function() {
+          this.labelValueSelection = this.dataSelector.selections;
+          //set published selections for saving the component
+          this.selectedLabel = this.labelValueSelection[0];
+          this.selectedValues = this.labelValueSelection[1];
+          console.log(this.labelValueSelection);
+          this.configureOptions();
+          this.drawChart();
+        }.bind(this));
+
+        this.configureOptions();
+        this.drawChart();
+      },
+      configureOptions: function(){
+        var colors = this.getColors();
+        // console.log(this.selectedValues)
+        this.options = {
+          "responsive": {
+            "enabled": true
+          },
+          "type": "serial",
+          "fontFamily": colors.theme.font,
+          "titles": [
+            { "text": this.chartTitle, "size": 15 },
+            { "text": this.chartSubtitle, "size": 10 }
+          ],
+          "addClassNames":true,
+          "theme": "none",
+          "pathToImages": "../amcharts/dist/amcharts/images/",
+          "autoMargins": false,
+          "marginLeft":30,
+          "marginRight":8,
+          "marginTop":10,
+          "marginBottom":26,
+          "dataProvider": this.input,
+
+          "startDuration": 2,
+          "startEffect": "elastic", // elastic, bounce, >, <
+          "graphs": [{
+              "alphaField": "alpha",
+              "balloonText": "<span style='font-size:13px;'>[[title]] in [[category]]:<b> [[value]]</b> [[additional]]</span>",
+              "dashLengthField": "dashLengthColumn",
+              "fillAlphas": 1, // opacity
+              "fillColors": colors.accents[0], // bar fill color
+              "lineColor": colors.accents[0],
+              "title": this.selectedValues[0],
+              "type": "column",
+              "valueField": this.selectedValues[0]
+              
+            }, {
+              "id":"graph2",
+              "balloonText": "<span style='font-size:13px;'>[[title]] in [[category]]:<b>[[value]]</b> [[additional]]</span>",
+              "bullet": this.bulletStyle,
+              "lineThickness": 3,
+              "type": "line",
+              "bulletSize": 7,
+              "bulletBorderAlpha": 1,
+              "bulletColor": "#FFFFFF",
+              "useLineColorForBulletBorder": true,
+              "bulletBorderThickness": 3,
+              "fillAlphas": 0,
+              "lineAlpha": 1,
+              "lineColor": colors.accents[1],
+              "title": this.selectedValues[1],
+              "valueField": this.selectedValues[1]
+            }],
+          "valueAxes": [{
+            "axisAlpha": 0.2,
+            "position": "left",
+            "gridAlpha":0 // horizontal gridlines opacity
+          }],
+          "categoryField": this.selectedLabel,
+          "categoryAxis": {
+            "gridPosition": "start",
+            "axisAlpha":0.2,
+            "tickLength":0,
+            "gridAlpha": 0 // vertical gridlines opacity
+          },
+
+        }
+      },
+      drawChart: function(){
+        var chart = AmCharts.makeChart(this.$.chart, this.options);
+
+      },
+      displayFilter: function(value){
+        return value ? "inline-block" : "none";
+      },
+      getColors: function(){
+        colors = {};
+        colors.theme = window.CoreStyle.g.theme;
+        colors.accents = [];
+
+        for (var color in colors.theme){
+          if(/^accent/.test(color)){
+            colors.accents.push(colors.theme[color]);
+          }
+        }
+
+        colors.count = colors.accents.length;
+
+        return colors;
+      }
+    });
+  </script>
+</polymer-element>

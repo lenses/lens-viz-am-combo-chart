@@ -1,0 +1,14 @@
+{
+  "name": "lens-viz-am-combo-chart",
+  "version": "0.0.0",
+  "keywords": "thelma, polymer, web-components",
+  "main": "lens-viz-am-combo-chart.html",
+  "dependencies": {
+    "th-theme": "thelmanews/th-theme",
+    "polymer": "Polymer/polymer#~0.5.1",
+    "amcharts": "~3.13.2",
+    "amcharts-responsive": "amcharts/responsive",
+    "lens-u-data-selector": "lenses/lens-u-data-selector",
+    "lens-u-data-utility": "lenses/lens-u-data-utility"
+  }
+}
