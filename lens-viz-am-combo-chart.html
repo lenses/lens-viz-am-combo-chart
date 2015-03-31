@@ -2,6 +2,10 @@
 <link rel="import" href="../th-theme/th-theme.html"> 
 <link rel="import" href="../lens-u-data-utility/lens-u-data-utility.html">
 <link rel="import" href="../lens-u-data-selector/lens-u-data-selector.html">
+<script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
+<script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
+<script type="text/javascript" src="../amcharts-responsive/responsive.min.js"></script>
+
 <!--
 A Thelma component providing solution to no problem in particular.
 
@@ -15,134 +19,195 @@ A Thelma component providing solution to no problem in particular.
 @homepage http://nishacodes.github.io/lens-viz-am-combo-chart
 -->
 
-<polymer-element name="lens-viz-am-combo-chart" attributes="input chartTitle chartSubtitle">
+<polymer-element name="lens-viz-am-combo-chart" attributes="input showOptions options selectedLineValues selectedBarValues selectedLabel labelValueSelection colors chartTitle chartSubtitle bulletSize bulletStyle handDrawn handDrawScatter rotate animateStyle animateDuration textColor backgroundColor">
   <template>
     <core-style ref="theme"></core-style>
     <link rel="stylesheet" href="lens-viz-am-combo-chart.css">
     <lens-u-data-utility id="utility"></lens-u-data-utility>
-    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
-    <div id="chart"></div>
+    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
+    <div id="chart" style="width:100%; height: {{showOptions | heightFilter}};"></div>
   </template>
-  <script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
-  <script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
-  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/patterns.js"></script>
+
 
   <script>
     Polymer({
-      input: [],
-      chartTitle: 'chart title',
-      chartSubtitle: 'chart subtitle',
-      bulletStyle: "round",// "none", "round", "square", "triangleUp", "triangleDown", "bubble", "custom"
+      // TODO
+      // add docs
+      // conditional options in editor
+      // dates/time scale
+      // load scripts to work in safari
       showOptions: true,
+      chartTitle: '',
+      chartSubtitle: '',
+      bulletStyle: "round",// "none", "round", "square", "triangleUp", "triangleDown", "bubble", "custom"
+      bulletSize: 7,
+      handDrawn: false,
+      handDrawScatter: 1, // 1 to 5
+      rotate: false,
+      animateStyle: "easeOutSine", // easeOutSine, easeInSine, bounce, elastic
+      animateDuration: 0.75, // 0 to 5 (seconds)
       observe: {
-        'labelValueSelection': 'configureOptions',
-        'input': 'ready'
+        'input': 'configureOptions',
+        'chartTitle': 'configureOptions',
+        'chartSubtitle': 'configureOptions',
+        'bulletStyle': 'configureOptions',
+        'bulletSize': 'configureOptions',
+        'handDrawn': 'configureOptions',
+        'handDrawScatter': 'configureOptions',
+        'rotate': 'configureOptions',
+        'animateStyle': 'configureOptions',
+        'animateDuration': 'configureOptions'
       },
       created: function(){
-        this.input = [];
+        // this.input = [];
         this.options = {};
       },
       ready: function () {
         this.dataSelector= this.$.data_selector;
-        
-
+      
         // Listen for theme changes
         document.addEventListener('th-theme-changed', function(e) {
-          this.getColors();
-          this.configureOptions();
-          this.drawChart();
+          this.colors = this.getColors();
         }.bind(this));
 
+        // Listen for data selection changes
         this.dataSelector.addEventListener('th-data-selection-changed', function() {
-          this.labelValueSelection = this.dataSelector.selections;
-          //set published selections for saving the component
           this.selectedLabel = this.labelValueSelection[0];
-          this.selectedValues = this.labelValueSelection[1];
-          console.log(this.labelValueSelection);
+          this.selectedLineValues = this.labelValueSelection[1];
+          this.selectedBarValues = this.labelValueSelection[2];
           this.configureOptions();
-          this.drawChart();
         }.bind(this));
 
-        this.configureOptions();
-        this.drawChart();
+        // this.configureOptions();
       },
+
       configureOptions: function(){
-        var colors = this.getColors();
-        // console.log(this.selectedValues)
+        console.log("configure")
+        this.colors = this.colors || this.getColors();
+        var fgColor = this.textColor || this.colors.theme.foreground1 || "black";
+        var bgColor = this.backgroundColor || this.colors.theme.background || "none";
+
         this.options = {
           "responsive": {
             "enabled": true
           },
           "type": "serial",
-          "fontFamily": colors.theme.font,
-          "titles": [
-            { "text": this.chartTitle, "size": 15 },
-            { "text": this.chartSubtitle, "size": 10 }
-          ],
+          "fontFamily": this.colors.theme.font,
+          "titles": this._getTitles(),
+          "rotate": this.rotate,
           "addClassNames":true,
-          "theme": "none",
-          "pathToImages": "../amcharts/dist/amcharts/images/",
-          "autoMargins": false,
-          "marginLeft":30,
-          "marginRight":8,
-          "marginTop":10,
-          "marginBottom":26,
+          "theme": "none", //patterns
+          // "pathToImages": "../amcharts/dist/amcharts/images/",
+          "autoMargins": true,
           "dataProvider": this.input,
-
-          "startDuration": 2,
-          "startEffect": "elastic", // elastic, bounce, >, <
-          "graphs": [{
-              "alphaField": "alpha",
-              "balloonText": "<span style='font-size:13px;'>[[title]] in [[category]]:<b> [[value]]</b> [[additional]]</span>",
-              "dashLengthField": "dashLengthColumn",
-              "fillAlphas": 1, // opacity
-              "fillColors": colors.accents[0], // bar fill color
-              "lineColor": colors.accents[0],
-              "title": this.selectedValues[0],
-              "type": "column",
-              "valueField": this.selectedValues[0]
-              
-            }, {
-              "id":"graph2",
-              "balloonText": "<span style='font-size:13px;'>[[title]] in [[category]]:<b>[[value]]</b> [[additional]]</span>",
-              "bullet": this.bulletStyle,
-              "lineThickness": 3,
-              "type": "line",
-              "bulletSize": 7,
-              "bulletBorderAlpha": 1,
-              "bulletColor": "#FFFFFF",
-              "useLineColorForBulletBorder": true,
-              "bulletBorderThickness": 3,
-              "fillAlphas": 0,
-              "lineAlpha": 1,
-              "lineColor": colors.accents[1],
-              "title": this.selectedValues[1],
-              "valueField": this.selectedValues[1]
-            }],
+          "handDrawn": this.handDrawn,
+          "handDrawScatter": this.handDrawScatter,
+          "startDuration": this.animateDuration,
+          "startEffect": this.animateStyle, // elastic, bounce, >, <
+          "graphs": this._getGraphs(),
           "valueAxes": [{
-            "axisAlpha": 0.2,
+            "axisAlpha": 0.3,
             "position": "left",
+            "axisColor": fgColor,
             "gridAlpha":0 // horizontal gridlines opacity
           }],
           "categoryField": this.selectedLabel,
           "categoryAxis": {
             "gridPosition": "start",
-            "axisAlpha":0.2,
+            "axisAlpha":0.3,
             "tickLength":0,
+            "axisColor": fgColor,
             "gridAlpha": 0 // vertical gridlines opacity
           },
-
+          "color": fgColor,
+          "backgroundColor": bgColor,
+          "backgroundAlpha": 1        
         }
+        
+        this.drawChart();
       },
       drawChart: function(){
-        var chart = AmCharts.makeChart(this.$.chart, this.options);
 
+        var chart = AmCharts.makeChart(this.$.chart, this.options);
+        console.log(chart);
+      },
+      _getTitles: function(){
+        var titles = [];
+        if (this.chartTitle){
+          titles.push({"text": this.chartTitle, "size": 15 })
+        }
+        if (this.chartSubtitle){
+          titles.push({"text": this.chartSubtitle, "size": 10 })
+        }
+
+        return titles;
+      },
+      _getGraphs: function(){
+        var self = this,        
+            i = 0,        
+            graphs = [];
+
+        if (this.selectedBarValues && this.selectedBarValues.length){
+          this.selectedBarValues.forEach(function(seriesName){
+            var barSeries = this._addBarSeries(seriesName, i);
+            graphs.push(barSeries);
+            i++;
+          }.bind(this))
+        }
+        if (this.selectedLineValues && this.selectedLineValues.length){
+          this.selectedLineValues.forEach(function(seriesName){
+            var lineSeries = this._addLineSeries(seriesName, i);
+            graphs.push(lineSeries);
+            i++;
+          }.bind(this))
+        }
+
+        return graphs;
+      },
+      _addLineSeries: function(seriesName, i){
+        var line = {  
+          "type": "line",
+          "lineThickness": 3,
+          "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b>[[value]]</b> [[additional]]</span>",
+          "bullet": this.bulletStyle,
+          "bulletSize": this.bulletSize,
+          "bulletBorderAlpha": 1,
+          "bulletColor": "#FFFFFF",
+          "useLineColorForBulletBorder": true,
+          "bulletBorderThickness": 3,
+          "fillAlphas": 0,
+          "lineAlpha": 1,
+          "lineColor": this.colors.accents[i],
+          "title": seriesName,
+          "valueField": seriesName
+        };
+
+        return line;
+      },
+      _addBarSeries: function(seriesName, i){
+        var bar = {
+          "id": "chart2",
+          "type": "column",
+          // "alphaField": "alpha",
+          "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b> [[value]]</b> [[additional]]</span>",
+          // "dashLengthField": "dashLengthColumn",
+          "fillAlphas": 1, // opacity
+          "fillColors": this.colors.accents[i], // bar fill color
+          "lineColor": this.colors.accents[i],
+          "title": seriesName,
+          "valueField": seriesName
+        };
+
+        return bar;
       },
       displayFilter: function(value){
         return value ? "inline-block" : "none";
       },
+      heightFilter: function(value){
+        return value ? "90%" : "100%";
+      },
       getColors: function(){
-        colors = {};
+        var colors = {};
         colors.theme = window.CoreStyle.g.theme;
         colors.accents = [];
 
@@ -153,8 +218,32 @@ A Thelma component providing solution to no problem in particular.
         }
 
         colors.count = colors.accents.length;
-
         return colors;
+      },
+      getMetaData: function(){
+        return {
+          "name": "lens-viz-am-combo-chart",
+          "description": "Bar and Line Chart by amCharts",
+          "category":"chart",
+          "version": "0.0.1",
+          "inputAttr": {
+            "chartTitle":{"friendly":"Title", "type":"string", "default":""},
+            "chartSubtitle":{"friendly":"Subtitle", "type":"string", "default":""},
+            "rotate":{"friendly":"Rotate?", "type":"boolean", "default": false},
+            // "hAxisTitle":{"friendly":"Horizontal Axis Title", "type":"string", "default":""},
+            "orientation": {"friendly":"Orientation", "type": "dropdown", "default": "horizontal", "values":["horizontal", "vertical"]},
+            "numberPattern": {"friendly":"Number Pattern", "type":"string", "default":""},
+            "fontSize":{"friendly":"Font Size", "type":"int", "default":""},
+            "textColor":{"friendly":"Text Color", "type":"color", "default":""},
+            "backgroundColor":{"friendly":"Background Color", "type":"color", "default":""},
+            "gridlinesColor":{"friendly":"Gridlines Color", "type":"color", "default":""},
+            "gridlines":{"friendly":"Number of Gridlines", "type":"int", "default":"5"},
+            "yAxisMin":{"friendly":"Y Axis Min", "type":"int", "default":""},
+            "yAxisMax":{"friendly":"Y Axis Max", "type":"int", "default":""},
+            "legend":{"friendly":"Show Legend?", "type":"boolean", "default": true}
+          }
+        }
+
       }
     });
   </script>
