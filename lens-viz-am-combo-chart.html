@@ -2,9 +2,7 @@
 <link rel="import" href="../th-theme/th-theme.html"> 
 <link rel="import" href="../lens-u-data-utility/lens-u-data-utility.html">
 <link rel="import" href="../lens-u-data-selector/lens-u-data-selector.html">
-<script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
-<script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
-<script type="text/javascript" src="../amcharts-responsive/responsive.min.js"></script>
+
 
 <!--
 A Thelma component providing solution to no problem in particular.
@@ -24,18 +22,26 @@ A Thelma component providing solution to no problem in particular.
     <core-style ref="theme"></core-style>
     <link rel="stylesheet" href="lens-viz-am-combo-chart.css">
     <lens-u-data-utility id="utility"></lens-u-data-utility>
-    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
+    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "numerical", "multi": true}, {"name": "bar", "type": "numerical", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
     <div id="chart" style="width:100%; height: {{showOptions | heightFilter}};"></div>
   </template>
-
-
+<!--
+  <script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
+  <script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
+  <script type="text/javascript" src="../amcharts-responsive/responsive.min.js"></script>
+  -->
   <script>
     Polymer({
       // TODO
       // add docs
+      // expose all options in options editor
+      // add observers for those options
       // conditional options in editor
       // dates/time scale
-      // load scripts to work in safari
+      // load scripts to work in safari and lenses
+      // add to lenses
+      // 
+      input: [],
       showOptions: true,
       chartTitle: '',
       chartSubtitle: '',
@@ -63,6 +69,7 @@ A Thelma component providing solution to no problem in particular.
         this.options = {};
       },
       ready: function () {
+        
         this.dataSelector= this.$.data_selector;
       
         // Listen for theme changes
@@ -72,13 +79,13 @@ A Thelma component providing solution to no problem in particular.
 
         // Listen for data selection changes
         this.dataSelector.addEventListener('th-data-selection-changed', function() {
+          console.log(this.labelValueSelection);
           this.selectedLabel = this.labelValueSelection[0];
           this.selectedLineValues = this.labelValueSelection[1];
           this.selectedBarValues = this.labelValueSelection[2];
           this.configureOptions();
         }.bind(this));
 
-        // this.configureOptions();
       },
 
       configureOptions: function(){
@@ -123,13 +130,11 @@ A Thelma component providing solution to no problem in particular.
           "backgroundColor": bgColor,
           "backgroundAlpha": 1        
         }
-        
+
         this.drawChart();
       },
       drawChart: function(){
-
         var chart = AmCharts.makeChart(this.$.chart, this.options);
-        console.log(chart);
       },
       _getTitles: function(){
         var titles = [];
