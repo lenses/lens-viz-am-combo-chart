@@ -3,7 +3,6 @@
 <link rel="import" href="../lens-u-data-utility/lens-u-data-utility.html">
 <link rel="import" href="../lens-u-data-selector/lens-u-data-selector.html">
 
-
 <!--
 A Thelma component providing solution to no problem in particular.
 
@@ -25,11 +24,10 @@ A Thelma component providing solution to no problem in particular.
     <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
     <div id="chart" style="width:100%; height: {{showOptions | heightFilter}};"></div>
   </template>
-<!--
+
   <script type="text/javascript" src="../amcharts/dist/amcharts/amcharts.js"></script>
   <script type="text/javascript" src="../amcharts/dist/amcharts/serial.js"></script>
   <script type="text/javascript" src="../amcharts-responsive/responsive.min.js"></script>
-  -->
   <script>
     Polymer({
       // TODO
@@ -74,6 +72,7 @@ A Thelma component providing solution to no problem in particular.
       created: function(){
         // this.input = [];
         this.options = {};
+        AmCharts.isReady = true; // Needed to support Safari
       },
       ready: function () {
         
