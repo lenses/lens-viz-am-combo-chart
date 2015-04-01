@@ -17,12 +17,12 @@ A Thelma component providing solution to no problem in particular.
 @homepage http://nishacodes.github.io/lens-viz-am-combo-chart
 -->
 
-<polymer-element name="lens-viz-am-combo-chart" attributes="input showOptions options selectedLineValues selectedBarValues selectedLabel labelValueSelection colors chartTitle chartSubtitle bulletSize bulletStyle handDrawn handDrawScatter rotate animateStyle animateDuration textColor backgroundColor">
+<polymer-element name="lens-viz-am-combo-chart" attributes="input showOptions selectedLineValues selectedBarValues selectedLabel labelValueSelection colors chartTitle chartSubtitle bulletSize bulletStyle bulletFill handDrawn handDrawScatter rotate animateStyle animateDuration textColor backgroundColor valuePrefix valueSuffix decimalPlaces">
   <template>
     <core-style ref="theme"></core-style>
     <link rel="stylesheet" href="lens-viz-am-combo-chart.css">
     <lens-u-data-utility id="utility"></lens-u-data-utility>
-    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "numerical", "multi": true}, {"name": "bar", "type": "numerical", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
+    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
     <div id="chart" style="width:100%; height: {{showOptions | heightFilter}};"></div>
   </template>
 <!--
@@ -52,17 +52,24 @@ A Thelma component providing solution to no problem in particular.
       rotate: false,
       animateStyle: "easeOutSine", // easeOutSine, easeInSine, bounce, elastic
       animateDuration: 0.75, // 0 to 5 (seconds)
+      valuePrefix: "",
+      valueSuffix: "",
       observe: {
         'input': 'configureOptions',
         'chartTitle': 'configureOptions',
         'chartSubtitle': 'configureOptions',
         'bulletStyle': 'configureOptions',
         'bulletSize': 'configureOptions',
+        'bulletFill': 'configureOptions',
         'handDrawn': 'configureOptions',
         'handDrawScatter': 'configureOptions',
         'rotate': 'configureOptions',
         'animateStyle': 'configureOptions',
-        'animateDuration': 'configureOptions'
+        'animateDuration': 'configureOptions',
+        'valuePrefix':'configureOptions',
+        'valueSuffix': 'configureOptions',
+        'textColor': 'configureOptions',
+        'backgroundColor': 'configureOptions'
       },
       created: function(){
         // this.input = [];
@@ -79,7 +86,6 @@ A Thelma component providing solution to no problem in particular.
 
         // Listen for data selection changes
         this.dataSelector.addEventListener('th-data-selection-changed', function() {
-          console.log(this.labelValueSelection);
           this.selectedLabel = this.labelValueSelection[0];
           this.selectedLineValues = this.labelValueSelection[1];
           this.selectedBarValues = this.labelValueSelection[2];
@@ -106,7 +112,7 @@ A Thelma component providing solution to no problem in particular.
           "theme": "none", //patterns
           // "pathToImages": "../amcharts/dist/amcharts/images/",
           "autoMargins": true,
-          "dataProvider": this.input,
+          "dataProvider": this._unformatInput(),
           "handDrawn": this.handDrawn,
           "handDrawScatter": this.handDrawScatter,
           "startDuration": this.animateDuration,
@@ -116,7 +122,9 @@ A Thelma component providing solution to no problem in particular.
             "axisAlpha": 0.3,
             "position": "left",
             "axisColor": fgColor,
-            "gridAlpha":0 // horizontal gridlines opacity
+            "gridAlpha":0, // horizontal gridlines opacity
+            "unit": this.valuePrefix || this.valueSuffix || '',
+            "unitPosition": this.valuePrefix ? "left" : "right"
           }],
           "categoryField": this.selectedLabel,
           "categoryAxis": {
@@ -173,11 +181,11 @@ A Thelma component providing solution to no problem in particular.
         var line = {  
           "type": "line",
           "lineThickness": 3,
-          "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b>[[value]]</b> [[additional]]</span>",
+          "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b> "+this.valuePrefix+"[[value]]"+this.valueSuffix+"</b> [[additional]]</span>",
           "bullet": this.bulletStyle,
           "bulletSize": this.bulletSize,
           "bulletBorderAlpha": 1,
-          "bulletColor": "#FFFFFF",
+          "bulletColor": this.bulletFill,
           "useLineColorForBulletBorder": true,
           "bulletBorderThickness": 3,
           "fillAlphas": 0,
@@ -205,6 +213,23 @@ A Thelma component providing solution to no problem in particular.
 
         return bar;
       },
+      _unformatInput: function(){
+        var self = this,
+            utils = self.$.utility;
+
+        var unformattedInput =  this.input.map(function(row){
+          var newRow = utils.clone(row, false);
+          self.selectedLineValues.forEach(function(columnName){
+            newRow[columnName] = utils.unformatString(newRow[columnName]);
+          })
+          self.selectedBarValues.forEach(function(columnName){
+            newRow[columnName] = utils.unformatString(newRow[columnName]);
+          })
+          return newRow;
+
+        })
+        return unformattedInput;
+      },
       displayFilter: function(value){
         return value ? "inline-block" : "none";
       },
@@ -226,6 +251,14 @@ A Thelma component providing solution to no problem in particular.
         return colors;
       },
       getMetaData: function(){
+        // Options to expose:
+        // - font size (to affect axis, tooltips, titles)
+        // - decimal places
+        // - colors for series + individual data points
+        // - legend options
+        // - axis min/max options 
+        // - gridlines
+
         return {
           "name": "lens-viz-am-combo-chart",
           "description": "Bar and Line Chart by amCharts",
@@ -235,17 +268,18 @@ A Thelma component providing solution to no problem in particular.
             "chartTitle":{"friendly":"Title", "type":"string", "default":""},
             "chartSubtitle":{"friendly":"Subtitle", "type":"string", "default":""},
             "rotate":{"friendly":"Rotate?", "type":"boolean", "default": false},
-            // "hAxisTitle":{"friendly":"Horizontal Axis Title", "type":"string", "default":""},
-            "orientation": {"friendly":"Orientation", "type": "dropdown", "default": "horizontal", "values":["horizontal", "vertical"]},
-            "numberPattern": {"friendly":"Number Pattern", "type":"string", "default":""},
-            "fontSize":{"friendly":"Font Size", "type":"int", "default":""},
+            "handDrawn":{"friendly":"HandDrawn?", "type":"boolean", "default": false},
+            "handDrawScatter":{"friendly":"Hand Drawn Intensity", "type":"range", "default": 1, "range":[0,5]},
+            "animateStyle":{"friendly":"Animation Style", "type": "dropdown", "default": "easeOutSine", "values":["easeOutSine", "easeInSine", "bounce", "elastic"]},
+            "animateDuration":{"friendly":"Animation Duration", "type":"range", "default": 0.75, "range":[0,5], "step":0.25},
+            "bulletStyle":{"friendly":"Bullet Style (for lines)", "type": "dropdown", "default": "round", "values":["none", "round", "square", "triangleUp", "triangleDown", "bubble"]},
+            "bulletSize":{"friendly":"Bullet Size", "type":"range", "default":7, "range":[1,20]},
+            "valuePrefix": {"friendly":"Number Prefix", "type":"string", "default":""},
+            "valueSuffix": {"friendly":"Number Suffix", "type":"string", "default":""},
             "textColor":{"friendly":"Text Color", "type":"color", "default":""},
             "backgroundColor":{"friendly":"Background Color", "type":"color", "default":""},
-            "gridlinesColor":{"friendly":"Gridlines Color", "type":"color", "default":""},
-            "gridlines":{"friendly":"Number of Gridlines", "type":"int", "default":"5"},
-            "yAxisMin":{"friendly":"Y Axis Min", "type":"int", "default":""},
-            "yAxisMax":{"friendly":"Y Axis Max", "type":"int", "default":""},
-            "legend":{"friendly":"Show Legend?", "type":"boolean", "default": true}
+            "bulletFill":{"friendly":"Bullet Fill Color", "type":"color", "default":""},
+            
           }
         }
 
