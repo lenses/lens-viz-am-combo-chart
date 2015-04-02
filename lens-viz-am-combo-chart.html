@@ -273,11 +273,11 @@ A Thelma component providing solution to no problem in particular.
             "animateDuration":{"friendly":"Animation Duration", "type":"range", "default": 0.75, "range":[0,5], "step":0.25},
             "bulletStyle":{"friendly":"Bullet Style (for lines)", "type": "dropdown", "default": "round", "values":["none", "round", "square", "triangleUp", "triangleDown"]},
             "bulletSize":{"friendly":"Bullet Size", "conditionalAttr":"bulletStyle", "type":"range", "default":7, "range":[1,20]},
-            "bulletFill":{"friendly":"Bullet Fill Color", "conditionalAttr":"bulletStyle", "type":"color", "default":""},
+            "bulletFill":{"friendly":"Bullet Fill Color", "conditionalAttr":"bulletStyle", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""},
             "valuePrefix": {"friendly":"Number Prefix", "type":"string", "default":""},
             "valueSuffix": {"friendly":"Number Suffix", "type":"string", "default":""},
-            "textColor":{"friendly":"Text Color", "type":"color", "default":""},
-            "backgroundColor":{"friendly":"Background Color", "type":"color", "default":""}  
+            "textColor":{"friendly":"Text Color", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""},
+            "backgroundColor":{"friendly":"Background Color", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""}  
           }
         }
 
