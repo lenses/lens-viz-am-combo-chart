@@ -21,7 +21,7 @@ A Thelma component providing solution to no problem in particular.
     <core-style ref="theme"></core-style>
     <link rel="stylesheet" href="lens-viz-am-combo-chart.css">
     <lens-u-data-utility id="utility"></lens-u-data-utility>
-    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 10%;"></lens-u-data-selector>
+    <lens-u-data-selector id="data_selector" input="{{input}}" selections="{{labelValueSelection}}" selectionSettings='[{"name": "label", "type": "any", "multi": false}, {"name": "line", "type": "any", "multi": true}, {"name": "bar", "type": "any", "multi": true}]' style="display: {{showOptions | displayFilter}}; height: 15%;"></lens-u-data-selector>
     <div id="chart" style="width:100%; height: {{showOptions | heightFilter}};"></div>
   </template>
 
@@ -132,6 +132,7 @@ A Thelma component providing solution to no problem in particular.
             "tickLength":0,
             "axisColor": fgColor,
             "gridAlpha": 0 // vertical gridlines opacity
+
           },
           "color": fgColor,
           "backgroundColor": bgColor,
@@ -178,6 +179,7 @@ A Thelma component providing solution to no problem in particular.
       },
       _addLineSeries: function(seriesName, i){
         var line = {  
+          "id": "chart"+i,
           "type": "line",
           "lineThickness": 3,
           "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b> "+this.valuePrefix+"[[value]]"+this.valueSuffix+"</b> [[additional]]</span>",
@@ -198,7 +200,7 @@ A Thelma component providing solution to no problem in particular.
       },
       _addBarSeries: function(seriesName, i){
         var bar = {
-          "id": "chart2",
+          "id": "chart"+i,
           "type": "column",
           // "alphaField": "alpha",
           "balloonText": "<span style='font-size:10px;'>[[title]] in [[category]]:<b> [[value]]</b> [[additional]]</span>",
@@ -233,7 +235,7 @@ A Thelma component providing solution to no problem in particular.
         return value ? "inline-block" : "none";
       },
       heightFilter: function(value){
-        return value ? "90%" : "100%";
+        return value ? "80%" : "100%";
       },
       getColors: function(){
         var colors = {};
@@ -267,7 +269,7 @@ A Thelma component providing solution to no problem in particular.
             "chartTitle":{"friendly":"Title", "type":"string", "default":""},
             "chartSubtitle":{"friendly":"Subtitle", "type":"string", "default":""},
             "rotate":{"friendly":"Rotate?", "type":"boolean", "default": false},
-            "handDrawn":{"friendly":"HandDrawn?", "type":"boolean", "default": true},
+            "handDrawn":{"friendly":"HandDrawn?", "type":"boolean", "default": false},
             "handDrawScatter":{"friendly":"Hand Drawn Intensity", "conditionalAttr":"handDrawn", "type":"range", "default": 1, "range":[0,5]},
             "animateStyle":{"friendly":"Animation Style", "type": "dropdown", "default": "easeOutSine", "values":["easeOutSine", "easeInSine", "bounce", "elastic"]},
             "animateDuration":{"friendly":"Animation Duration", "type":"range", "default": 0.75, "range":[0,5], "step":0.25},
@@ -276,8 +278,8 @@ A Thelma component providing solution to no problem in particular.
             "bulletFill":{"friendly":"Bullet Fill Color", "conditionalAttr":"bulletStyle", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""},
             "valuePrefix": {"friendly":"Number Prefix", "type":"string", "default":""},
             "valueSuffix": {"friendly":"Number Suffix", "type":"string", "default":""},
-            "textColor":{"friendly":"Text Color", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""},
-            "backgroundColor":{"friendly":"Background Color", "type":"custom", "bindAttr":"color", "name":"lens-u-colorpicker", "default":""}  
+            "textColor":{"friendly":"Text Color", "type":"color",  "default":""},
+            "backgroundColor":{"friendly":"Background Color", "type":"color",  "default":""}  
           }
         }
 
