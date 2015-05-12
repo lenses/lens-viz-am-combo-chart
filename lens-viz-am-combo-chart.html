@@ -77,11 +77,13 @@ A Thelma component providing solution to no problem in particular.
       ready: function () {
         
         this.dataSelector= this.$.data_selector;
-      
+
         // Listen for theme changes
         document.addEventListener('th-theme-changed', function(e) {
-          this.colors = this.getColors();
+          this.getColors();
+          this.configureOptions();
         }.bind(this));
+
 
         // Listen for data selection changes
         this.dataSelector.addEventListener('th-data-selection-changed', function() {
